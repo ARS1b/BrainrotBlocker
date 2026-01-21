@@ -1,0 +1,28 @@
+{
+    "manifest_version": 3,
+    "name": "Brainrot Blocker",
+    "version": "1.0",
+    "description": "Helps you focus while studying by blocking brainrot content.",
+    "permissions": [
+        "storage",
+        "tabs",
+        "alarms",
+        "notifications"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
+}
