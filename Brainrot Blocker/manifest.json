@@ -10,10 +10,10 @@
         "notifications"
     ],
     "background": {
-        "service_worker": "background.js"
+        "service_worker": "background/background.js"
     },
     "action": {
-        "default_popup": "popup.html"
+        "default_popup": "popup/popup.html"
     },
     "content_scripts": [
         {
@@ -21,7 +21,10 @@
                 "<all_urls>"
             ],
             "js": [
-                "content.js"
+                "content/content.js"
+            ],
+            "css": [
+                "styles/styles.css"
             ]
         }
     ]

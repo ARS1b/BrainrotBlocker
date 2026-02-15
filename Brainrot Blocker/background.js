@@ -1,1 +1,0 @@
-// Tänne Background skriptit
