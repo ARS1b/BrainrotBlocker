@@ -4,8 +4,8 @@ const headerTitle = document.getElementById('headerTitle'); // headerin otsikko 
 const focusToggleBtn = document.getElementById('focusToggleBtn'); // nappi joka käynnistää tai lopettaa focus modin
 const statusDot = document.querySelector('.status-dot'); // pieni piste joka näyttää focus modin tilan (vihreä = päällä, punainen = pois päältä)
 const statusText = document.querySelector('.status-text'); // teksti joka näyttää focus modin tilan (esim. "Focus Mode: ON" tai "Focus Mode: OFF")
-const menuItems = document.querySelectorAll('.menu-item'); // sivun info (pitää varmaan muuttaa kun ominaisuudet tehty)
-const pages = document.querySelectorAll('.page'); // kaikki "sivut"
+const menuItems = document.querySelectorAll('.menu-item'); // menu-napit jotka navigoivat alasivuille
+const dynamicPage = document.getElementById('page-dynamic'); // dynaaminen container alasivuille
 
 // ===== Page titles mapping =====
 const pageTitles = {
@@ -19,6 +19,7 @@ const pageTitles = {
 // ===== State =====
 let focusMode = false; // focus mode defaulttina pois päältä
 let currentPage = 'main'; // seuraa nykyistä sivua
+const loadedPages = {}; // välimuisti ladatuille HTML-sivuille
 
 // ===== Initialize =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,20 +44,11 @@ backBtn.addEventListener('click', () => {
     navigateTo('main');
 }); // menee takaisin main pagelle
 
-function navigateTo(pageId) {
+async function navigateTo(pageId) {
     // Ilmoita vanhalle sivulle että poistutaan
     const oldModule = window.PageModules?.[currentPage];
     if (oldModule?.onLeave) {
         oldModule.onLeave();
-    }
-
-    // Hide all pages
-    pages.forEach(page => page.classList.remove('active'));
-
-    // Show target page
-    const targetPage = document.getElementById(`page-${pageId}`);
-    if (targetPage) {
-        targetPage.classList.add('active');
     }
 
     // Update header
@@ -65,8 +57,18 @@ function navigateTo(pageId) {
     // Show/hide back button
     if (pageId === 'main') {
         backBtn.classList.add('hidden');
+        // Näytä main, piilota dynaaminen sivu
+        document.getElementById('page-main').classList.add('active');
+        dynamicPage.classList.remove('active');
+        dynamicPage.innerHTML = '';
     } else {
         backBtn.classList.remove('hidden');
+        // Piilota main, näytä dynaaminen sivu
+        document.getElementById('page-main').classList.remove('active');
+
+        // Lataa sivun HTML (välimuistista tai fetchillä)
+        await loadPageHTML(pageId);
+        dynamicPage.classList.add('active');
     }
 
     // Ilmoita uudelle sivulle että se on aktiivinen
@@ -74,6 +76,26 @@ function navigateTo(pageId) {
     const newModule = window.PageModules?.[pageId];
     if (newModule?.onEnter) {
         newModule.onEnter();
+    }
+}
+
+// ===== Sivun HTML:n lataus =====
+async function loadPageHTML(pageId) {
+    // Käytä välimuistia jos sivu on jo ladattu
+    if (loadedPages[pageId]) {
+        dynamicPage.innerHTML = loadedPages[pageId];
+        return;
+    }
+
+    try {
+        const response = await fetch(`pages/${pageId}.html`);
+        if (!response.ok) throw new Error(`Sivua ${pageId}.html ei löytynyt`);
+        const html = await response.text();
+        loadedPages[pageId] = html; // tallenna välimuistiin
+        dynamicPage.innerHTML = html;
+    } catch (error) {
+        console.error('Sivun lataus epäonnistui:', error);
+        dynamicPage.innerHTML = '<div class="page-content"><p class="placeholder-text">⚠️ Sivun lataus epäonnistui</p></div>';
     }
 }
 

@@ -2,21 +2,16 @@
 window.PageModules = window.PageModules || {};
 
 window.PageModules.timer = {
-    initialized: false,
-
     // Kutsutaan kun sivu avataan
     onEnter() {
-        if (!this.initialized) {
-            this.init();
-            this.initialized = true;
-        }
+        this.init();
     },
 
     // Kutsutaan kun sivulta poistutaan
     onLeave() {
     },
 
-    // Kertaluontoinen alustus
+    // Alustus - kutsutaan joka kerta kun sivu avataan (DOM ladataan uudelleen)
     init() {
         // TODO: Lisää timer-sivun DOM-elementit ja event listenerit tähän
     }
