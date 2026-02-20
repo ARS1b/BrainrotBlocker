@@ -18,6 +18,7 @@ const pageTitles = {
 
 // ===== State =====
 let focusMode = false; // focus mode defaulttina pois päältä
+let currentPage = 'main'; // seuraa nykyistä sivua
 
 // ===== Initialize =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,6 +44,12 @@ backBtn.addEventListener('click', () => {
 }); // menee takaisin main pagelle
 
 function navigateTo(pageId) {
+    // Ilmoita vanhalle sivulle että poistutaan
+    const oldModule = window.PageModules?.[currentPage];
+    if (oldModule?.onLeave) {
+        oldModule.onLeave();
+    }
+
     // Hide all pages
     pages.forEach(page => page.classList.remove('active'));
 
@@ -60,6 +67,13 @@ function navigateTo(pageId) {
         backBtn.classList.add('hidden');
     } else {
         backBtn.classList.remove('hidden');
+    }
+
+    // Ilmoita uudelle sivulle että se on aktiivinen
+    currentPage = pageId;
+    const newModule = window.PageModules?.[pageId];
+    if (newModule?.onEnter) {
+        newModule.onEnter();
     }
 }
 
