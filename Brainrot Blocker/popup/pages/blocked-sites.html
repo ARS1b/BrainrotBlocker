@@ -1,4 +1,23 @@
 <!-- Blocked Sites Page -->
-<div class="page-content">
-    <p class="placeholder-text">🚫 Blocked sites management coming soon...</p>
+<div class="page-content blocked-sites-page">
+    <div class="blocked-sites-form">
+        <label class="blocked-sites-label" for="blockedSiteInput">Lisää estettävä sivu</label>
+        <div class="blocked-sites-input-row">
+            <input
+                id="blockedSiteInput"
+                class="blocked-sites-input"
+                type="text"
+                placeholder="esim. youtube.com"
+                autocomplete="off"
+            />
+            <button id="addBlockedSiteBtn" class="blocked-sites-add-btn">Lisää</button>
+        </div>
+        <button id="addCurrentSiteBtn" class="blocked-sites-current-btn">Lisää nykyinen sivu</button>
+        <p id="blockedSiteMessage" class="blocked-sites-message" aria-live="polite"></p>
+    </div>
+
+    <div class="blocked-sites-list-container">
+        <h3 class="blocked-sites-list-title">Estetyt sivut</h3>
+        <ul id="blockedSitesList" class="blocked-sites-list"></ul>
+    </div>
 </div>
