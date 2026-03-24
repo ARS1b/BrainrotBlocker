@@ -90,6 +90,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         startFocusSessionTimerLoop();
     });
+
+    // Tarkistaa onko background.js asettanut pendingPage:n (notifikaation klikkaus)
+// ja navigoi sinne automaattisesti kun popup avautuu.
+    chrome.storage.local.get('pendingPage', (data) => {
+        if (data.pendingPage) {
+            chrome.storage.local.remove('pendingPage');
+            navigateTo(data.pendingPage); // käyttää olemassa olevaa navigateTo-funktiota
+        }
+    });
 });
 
 // ===== Navigation =====
@@ -156,6 +165,20 @@ async function loadPageHTML(pageId) {
     } catch (error) {
         console.error('Sivun lataus epäonnistui:', error);
         dynamicPage.innerHTML = '<div class="page-content"><p class="placeholder-text">⚠️ Sivun lataus epäonnistui</p></div>';
+    }
+
+    // Lataa sivun JS — ja ODOTA sen valmistumista ennen paluuta.
+    // Ilman tätä odotusta navigateTo kutsuu onEnter() ennen kuin
+    // window.PageModules.[pageId] on rekisteröity → napit eivät toimi.
+    if (!document.querySelector(`script[data-page="${pageId}"]`)) {
+        await new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = `pages/${pageId}.js`;
+            script.dataset.page = pageId;
+            script.onload  = resolve;
+            script.onerror = resolve; // jatketaan vaikka JS-tiedostoa ei olisi
+            document.body.appendChild(script);
+        });
     }
 }
 

@@ -28,5 +28,8 @@
             ],
             "run_at": "document_start"
         }
-    ]
+    ],
+    "icons": {
+        "128": "icons/icon128.png"
+    }
 }
