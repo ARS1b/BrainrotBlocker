@@ -1,4 +1,175 @@
 <!-- Stats Page -->
-<div class="page-content">
-    <p class="placeholder-text">📊 Statistics coming soon...</p>
+<div class="page-content stats-page">
+    <style>
+        .stats-page {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stats-card {
+            background: #121217;
+            border: 1px solid #2b2f38;
+            border-radius: 10px;
+            padding: 12px;
+            min-height: 86px;
+        }
+
+        .stats-card-label {
+            margin: 0;
+            color: #98a2b3;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .stats-card-value {
+            margin: 8px 0 0;
+            color: #f8fafc;
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.05;
+        }
+
+        .stats-panel {
+            background: #121217;
+            border: 1px solid #2b2f38;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .stats-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .stats-panel-title {
+            margin: 0;
+            color: #f8fafc;
+            font-size: 13px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        .stats-refresh-btn {
+            background: #222733;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 6px 10px;
+            cursor: pointer;
+        }
+
+        .stats-refresh-btn:hover {
+            border-color: #6b7280;
+        }
+
+        .stats-reset-btn {
+            background: #3b1117;
+            border: 1px solid #7f1d1d;
+            border-radius: 8px;
+            color: #fecaca;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 6px 10px;
+            cursor: pointer;
+        }
+
+        .stats-reset-btn:hover {
+            border-color: #ef4444;
+            color: #fee2e2;
+        }
+
+        .stats-panel-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .site-stats-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 170px;
+            overflow-y: auto;
+        }
+
+        .site-stats-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+            background: #181c24;
+            border: 1px solid #2d3340;
+            border-radius: 8px;
+            padding: 9px 10px;
+        }
+
+        .site-stats-host {
+            color: #e2e8f0;
+            font-size: 12px;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .site-stats-time {
+            color: #22c55e;
+            font-size: 12px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .site-stats-empty {
+            margin: 0;
+            color: #9ca3af;
+            font-size: 12px;
+            padding: 12px 2px;
+        }
+    </style>
+
+    <div class="stats-cards">
+        <article class="stats-card">
+            <p class="stats-card-label">Current Session</p>
+            <p class="stats-card-value" id="sessionFocusTime">00:00:00</p>
+        </article>
+
+        <article class="stats-card">
+            <p class="stats-card-label">Overall</p>
+            <p class="stats-card-value" id="overallFocusTime">00:00:00</p>
+        </article>
+    </div>
+
+    <section class="stats-panel" aria-labelledby="siteStatsTitle">
+        <div class="stats-panel-header">
+            <h2 class="stats-panel-title" id="siteStatsTitle">Time By Site</h2>
+            <div class="stats-panel-actions">
+                <button type="button" class="stats-refresh-btn" id="refreshStatsBtn">Refresh</button>
+                <button type="button" class="stats-reset-btn" id="resetStatsBtn">Reset Overall</button>
+            </div>
+        </div>
+
+        <ul class="site-stats-list" id="siteStatsList"></ul>
+        <p class="site-stats-empty" id="siteStatsEmpty">No focus time recorded yet.</p>
+    </section>
 </div>

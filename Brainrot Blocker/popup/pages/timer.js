@@ -64,6 +64,7 @@ window.PageModules.timer = {
         const pct = totalSeconds > 0 ? (remainingSeconds / totalSeconds) * 100 : 100;
         progressFill.style.width = `${pct}%`;
         }
+
         
         // ─── Timer logic ─────────────────────────────────────────────────────────────
         function tick() {
@@ -82,6 +83,7 @@ window.PageModules.timer = {
         if (remaining <= 10) {
             setUiState('danger');
         }
+
         }
         
         function startTimer() {
@@ -90,18 +92,16 @@ window.PageModules.timer = {
             minutesInput.focus();
             return;
         }
-        
+
         totalSeconds = minutes * 60;
         endTime      = Date.now() + totalSeconds * 1000;
         isRunning    = true;
-        
-        // Persist to storage so background can also track
+
         chrome.storage.local.set({ endTime, totalSeconds });
-        
-        // Set alarm in background for notification
+
         chrome.alarms.create('timerDone', { when: endTime });
-        
-        tick(); // immediate first tick
+
+        tick();
         timerInterval = setInterval(tick, 500);
         setUiState('running');
         }
@@ -110,7 +110,7 @@ window.PageModules.timer = {
         clearInterval(timerInterval);
         timerInterval = null;
         isRunning = false;
-        
+
         chrome.alarms.clear('timerDone');
         chrome.storage.local.remove(['endTime', 'totalSeconds']);
         
@@ -124,7 +124,7 @@ window.PageModules.timer = {
         clearInterval(timerInterval);
         timerInterval = null;
         isRunning = false;
-        
+
         timeDisplay.textContent = '00:00';
         progressFill.style.width = '0%';
         setUiState('done');
@@ -136,6 +136,7 @@ window.PageModules.timer = {
         clearInterval(timerInterval);
         timerInterval = null;
         isRunning = false;
+
         endTime = null;
         totalSeconds = 0;
         

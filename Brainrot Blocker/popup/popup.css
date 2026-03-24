@@ -98,6 +98,15 @@ body {
     color: #a0a0b8;
 }
 
+.focus-session-timer {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+}
+
 .focus-toggle-btn {
     width: 100%;
     padding: 12px 24px;

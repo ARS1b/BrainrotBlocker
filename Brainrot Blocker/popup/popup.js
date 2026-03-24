@@ -4,6 +4,7 @@ const headerTitle = document.getElementById('headerTitle'); // headerin otsikko 
 const focusToggleBtn = document.getElementById('focusToggleBtn'); // nappi joka käynnistää tai lopettaa focus modin
 const statusDot = document.querySelector('.status-dot'); // pieni piste joka näyttää focus modin tilan (vihreä = päällä, punainen = pois päältä)
 const statusText = document.querySelector('.status-text'); // teksti joka näyttää focus modin tilan (esim. "Focus Mode: ON" tai "Focus Mode: OFF")
+const focusSessionTimer = document.getElementById('focusSessionTimer'); // näyttä nykyisen fokussession ajankesto
 const menuItems = document.querySelectorAll('.menu-item'); // menu-napit jotka navigoivat alasivuille
 const dynamicPage = document.getElementById('page-dynamic'); // dynaaminen container alasivuille
 
@@ -20,6 +21,63 @@ const pageTitles = {
 let focusMode = false; // focus mode defaulttina pois päältä
 let currentPage = 'main'; // seuraa nykyistä sivua
 const loadedPages = {}; // välimuisti ladatuille HTML-sivuille
+let focusTimerInterval = null;
+const FOCUS_SESSION_STARTED_AT_KEY = 'focusSessionStartedAt';
+
+function formatDuration(milliseconds) {
+    const totalSeconds = Math.max(0, Math.floor((Number(milliseconds) || 0) / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function updateFocusTimerDisplay(milliseconds) {
+    if (!focusSessionTimer) {
+        return;
+    }
+
+    focusSessionTimer.textContent = formatDuration(milliseconds);
+}
+
+function refreshFocusSessionTimer() {
+    chrome.runtime.sendMessage({ type: 'GET_FOCUS_SESSION_TIME' }, (response) => {
+        if (chrome.runtime.lastError) {
+            chrome.storage.local.get(['focusMode', FOCUS_SESSION_STARTED_AT_KEY], (result) => {
+                if (!result.focusMode) {
+                    updateFocusTimerDisplay(0);
+                    return;
+                }
+
+                const startedAt = Number(result[FOCUS_SESSION_STARTED_AT_KEY]) || 0;
+                const elapsedMs = startedAt > 0 ? Math.max(0, Date.now() - startedAt) : 0;
+                updateFocusTimerDisplay(elapsedMs);
+            });
+            return;
+        }
+
+        if (!response || typeof response !== 'object') {
+            return;
+        }
+
+        if (!response.focusMode) {
+            updateFocusTimerDisplay(0);
+            return;
+        }
+
+        updateFocusTimerDisplay(Number(response.sessionMs) || 0);
+    });
+}
+
+function startFocusSessionTimerLoop() {
+    if (focusTimerInterval) {
+        clearInterval(focusTimerInterval);
+    }
+
+    refreshFocusSessionTimer();
+    focusTimerInterval = setInterval(refreshFocusSessionTimer, 1000);
+}
 
 // ===== Initialize =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -29,6 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
             focusMode = true;
             updateFocusUI();
         }
+
+        startFocusSessionTimerLoop();
     });
 });
 
@@ -112,6 +172,12 @@ focusToggleBtn.addEventListener('click', () => {
         type: 'FOCUS_MODE_CHANGED',
         enabled: focusMode
     });
+
+    if (!focusMode) {
+        updateFocusTimerDisplay(0);
+    } else {
+        refreshFocusSessionTimer();
+    }
 });
 
 function updateFocusUI() {
