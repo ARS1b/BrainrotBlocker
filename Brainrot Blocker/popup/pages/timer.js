@@ -13,181 +13,167 @@ window.PageModules.timer = {
 
     // Alustus - kutsutaan joka kerta kun sivu avataan (DOM ladataan uudelleen)
     init() {
-        // ─── DOM ────────────────────────────────────────────────────────────────────
-        const timeDisplay  = document.getElementById('timeDisplay');
-        const displayLabel = document.getElementById('displayLabel');
-        const minutesInput = document.getElementById('minutesInput');
-        const startBtn     = document.getElementById('startBtn');
-        const resetBtn     = document.getElementById('resetBtn');
-        const display      = document.getElementById('display');
-        const statusDot    = document.getElementById('statusDot');
-        const progressFill = document.getElementById('progressFill');
-        const doneBanner   = document.getElementById('doneBanner');
         
-        // ─── State ──────────────────────────────────────────────────────────────────
         let timerInterval = null;
-        let endTime       = null;   // ms timestamp when timer ends
-        let totalSeconds  = 0;      // total duration in seconds
+        let endTime       = null;
+        let totalSeconds  = 0;
         let isRunning     = false;
         
-        // ─── Helpers ─────────────────────────────────────────────────────────────────
+        // ─── DOM-viitteet (haetaan onEnter:ssa kun HTML on ladattu) ──────────────
+        let elDisplay, elTime, elSublabel, elProgress, elMinutes, elStart, elReset, elDone;
+        
+        function getEls() {
+            elDisplay  = document.getElementById('t-display');
+            elTime     = document.getElementById('t-time');
+            elSublabel = document.getElementById('t-sublabel');
+            elProgress = document.getElementById('t-progress');
+            elMinutes  = document.getElementById('t-minutes');
+            elStart    = document.getElementById('t-start');
+            elReset    = document.getElementById('t-reset');
+            elDone     = document.getElementById('t-done');
+        }
+        
+        // ─── Apufunktiot ─────────────────────────────────────────────────────────
         function formatTime(seconds) {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         }
         
         function setUiState(state) {
-        // state: 'idle' | 'running' | 'danger' | 'done'
-        display.className    = `display ${state}`;
-        statusDot.className  = `dot ${state === 'idle' ? 'idle' : state === 'done' || state === 'danger' ? 'danger' : ''}`;
-        progressFill.className = `progress-fill ${state === 'danger' || state === 'done' ? 'danger' : ''}`;
+            // state: 'idle' | 'running' | 'danger' | 'done'
+            elDisplay.className = `t-display ${state}`;
+            elProgress.className = `t-progress-fill${state === 'danger' || state === 'done' ? ' danger' : ''}`;
+            elDone.classList.toggle('visible', state === 'done');
         
-        doneBanner.classList.toggle('visible', state === 'done');
-        
-        if (state === 'running' || state === 'danger') {
-            startBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pysäytä`;
-            minutesInput.disabled = true;
-            displayLabel.textContent = 'Aikaa jäljellä';
-        } else if (state === 'done') {
-            startBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Uudelleen`;
-            minutesInput.disabled = false;
-            displayLabel.textContent = 'Aika loppui!';
-        } else {
-            startBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Käynnistä`;
-            minutesInput.disabled = false;
-            displayLabel.textContent = 'Aseta aika';
-        }
+            if (state === 'running' || state === 'danger') {
+            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pysäytä`;
+            elMinutes.disabled = true;
+            elSublabel.textContent = 'Aikaa jäljellä';
+            } else if (state === 'done') {
+            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Uudelleen`;
+            elMinutes.disabled = false;
+            elSublabel.textContent = 'Aika loppui!';
+            } else {
+            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Käynnistä`;
+            elMinutes.disabled = false;
+            elSublabel.textContent = 'Aseta aika';
+            }
         }
         
         function updateProgress(remainingSeconds) {
-        const pct = totalSeconds > 0 ? (remainingSeconds / totalSeconds) * 100 : 100;
-        progressFill.style.width = `${pct}%`;
+            const pct = totalSeconds > 0 ? (remainingSeconds / totalSeconds) * 100 : 100;
+            elProgress.style.width = `${pct}%`;
         }
         
-        // ─── Timer logic ─────────────────────────────────────────────────────────────
+        // ─── Timerin logiikka ────────────────────────────────────────────────────
         function tick() {
-        const now       = Date.now();
-        const remaining = Math.max(0, Math.round((endTime - now) / 1000));
+            const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+            elTime.textContent = formatTime(remaining);
+            updateProgress(remaining);
         
-        timeDisplay.textContent = formatTime(remaining);
-        updateProgress(remaining);
-        
-        if (remaining <= 0) {
-            finishTimer();
-            return;
-        }
-        
-        // Switch to danger mode in last 10 seconds
-        if (remaining <= 10) {
-            setUiState('danger');
-        }
+            if (remaining <= 0) { finishTimer(); return; }
+            if (remaining <= 10) setUiState('danger');
         }
         
         function startTimer() {
-        const minutes = parseInt(minutesInput.value, 10);
-        if (!minutes || minutes < 1) {
-            minutesInput.focus();
-            return;
-        }
+            const minutes = parseInt(elMinutes.value, 10);
+            if (!minutes || minutes < 1) { elMinutes.focus(); return; }
         
-        totalSeconds = minutes * 60;
-        endTime      = Date.now() + totalSeconds * 1000;
-        isRunning    = true;
+            totalSeconds = minutes * 60;
+            endTime      = Date.now() + totalSeconds * 1000;
+            isRunning    = true;
         
-        // Persist to storage so background can also track
-        chrome.storage.local.set({ endTime, totalSeconds });
+            chrome.storage.local.set({ endTime, totalSeconds });
+            chrome.alarms.create('timerDone', { when: endTime });
         
-        // Set alarm in background for notification
-        chrome.alarms.create('timerDone', { when: endTime });
-        
-        tick(); // immediate first tick
-        timerInterval = setInterval(tick, 500);
-        setUiState('running');
+            tick();
+            timerInterval = setInterval(tick, 500);
+            setUiState('running');
         }
         
         function pauseTimer() {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        isRunning = false;
+            clearInterval(timerInterval); timerInterval = null;
+            isRunning = false;
+            chrome.alarms.clear('timerDone');
+            chrome.storage.local.remove(['endTime', 'totalSeconds']);
         
-        chrome.alarms.clear('timerDone');
-        chrome.storage.local.remove(['endTime', 'totalSeconds']);
-        
-        const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
-        timeDisplay.textContent = formatTime(remaining);
-        setUiState('idle');
-        displayLabel.textContent = 'Pysäytetty';
+            const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+            elTime.textContent = formatTime(remaining);
+            setUiState('idle');
+            elSublabel.textContent = 'Pysäytetty';
         }
         
         function finishTimer() {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        isRunning = false;
-        
-        timeDisplay.textContent = '00:00';
-        progressFill.style.width = '0%';
-        setUiState('done');
-        
-        chrome.storage.local.remove(['endTime', 'totalSeconds']);
+            clearInterval(timerInterval); timerInterval = null;
+            isRunning = false;
+            elTime.textContent = '00:00';
+            elProgress.style.width = '0%';
+            chrome.storage.local.remove(['endTime', 'totalSeconds']);
+            setUiState('done');
         }
         
         function resetTimer() {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        isRunning = false;
-        endTime = null;
-        totalSeconds = 0;
-        
-        chrome.alarms.clear('timerDone');
-        chrome.storage.local.remove(['endTime', 'totalSeconds']);
-        
-        timeDisplay.textContent = '00:00';
-        progressFill.style.width = '100%';
-        minutesInput.value = '';
-        setUiState('idle');
+            clearInterval(timerInterval); timerInterval = null;
+            isRunning = false; endTime = null; totalSeconds = 0;
+            chrome.alarms.clear('timerDone');
+            chrome.storage.local.remove(['endTime', 'totalSeconds']);
+            elTime.textContent = '00:00';
+            elProgress.style.width = '100%';
+            elMinutes.value = '';
+            setUiState('idle');
         }
         
-        // ─── Restore state when popup reopens ────────────────────────────────────────
-        chrome.storage.local.get(['endTime', 'totalSeconds'], (data) => {
-        if (data.endTime && data.totalSeconds) {
-            const remaining = Math.round((data.endTime - Date.now()) / 1000);
-            if (remaining > 0) {
-            endTime      = data.endTime;
-            totalSeconds = data.totalSeconds;
-            isRunning    = true;
-            const mins   = Math.ceil(totalSeconds / 60);
-            minutesInput.value = mins;
-            tick();
-            timerInterval = setInterval(tick, 500);
-            setUiState(remaining <= 10 ? 'danger' : 'running');
-            } else {
-            // Timer already finished while popup was closed
-            finishTimer();
+        // ─── Kuuntele background.js:n "TIMER_DONE" -viesti ───────────────────────
+        function onMessage(msg) {
+            if (msg.type === 'TIMER_DONE') finishTimer();
+        }
+        
+        // ─── PageModule hooks ────────────────────────────────────────────────────
+        window.PageModules = window.PageModules || {};
+        window.PageModules.timer = {
+        
+            onEnter() {
+            getEls();
+        
+            // Palauta tila storagesta jos timer pyörii taustalla
+            chrome.storage.local.get(['endTime', 'totalSeconds'], (data) => {
+                if (data.endTime && data.totalSeconds) {
+                const remaining = Math.round((data.endTime - Date.now()) / 1000);
+                if (remaining > 0) {
+                    endTime      = data.endTime;
+                    totalSeconds = data.totalSeconds;
+                    isRunning    = true;
+                    elMinutes.value = Math.ceil(totalSeconds / 60);
+                    tick();
+                    timerInterval = setInterval(tick, 500);
+                    setUiState(remaining <= 10 ? 'danger' : 'running');
+                } else {
+                    finishTimer();
+                }
+                }
+            });
+        
+            // Napit
+            elStart.addEventListener('click', () => isRunning ? pauseTimer() : startTimer());
+            elReset.addEventListener('click', resetTimer);
+            elMinutes.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !isRunning) startTimer();
+            });
+        
+            // Kuuntele background-viestejä
+            chrome.runtime.onMessage.addListener(onMessage);
+            },
+        
+            onLeave() {
+            // Pysäytä vain tick-intervalli, älä sammuta alarmia —
+            // timer jatkaa laskentaa taustalla
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isRunning = false; // lokaalisti, storage pysyy
+            chrome.runtime.onMessage.removeListener(onMessage);
             }
-        }
-        });
-        
-        // ─── Listen for "done" message from background ───────────────────────────────
-        chrome.runtime.onMessage.addListener((msg) => {
-        if (msg.type === 'TIMER_DONE') {
-            finishTimer();
-        }
-        });
-        
-        // ─── Event listeners ─────────────────────────────────────────────────────────
-        startBtn.addEventListener('click', () => {
-        if (isRunning) {
-            pauseTimer();
-        } else {
-            startTimer();
-        }
-        });
-        
-        resetBtn.addEventListener('click', resetTimer);
-        
-        minutesInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !isRunning) startTimer();
-        });
+        };
+    
     }
 };
