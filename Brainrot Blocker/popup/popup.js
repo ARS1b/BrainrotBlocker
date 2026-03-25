@@ -23,6 +23,46 @@ let currentPage = 'main'; // seuraa nykyistä sivua
 const loadedPages = {}; // välimuisti ladatuille HTML-sivuille
 let focusTimerInterval = null;
 const FOCUS_SESSION_STARTED_AT_KEY = 'focusSessionStartedAt';
+const APP_THEME_KEY = 'appTheme';
+const DEFAULT_THEME = 'dark';
+let currentTheme = DEFAULT_THEME;
+
+function normalizeTheme(theme) {
+    return theme === 'light' ? 'light' : 'dark';
+}
+
+function applyTheme(theme) {
+    const normalizedTheme = normalizeTheme(theme);
+    currentTheme = normalizedTheme;
+    document.body.classList.toggle('theme-light', normalizedTheme === 'light');
+}
+
+function setTheme(theme, persist) {
+    const normalizedTheme = normalizeTheme(theme);
+    applyTheme(normalizedTheme);
+
+    if (!persist) {
+        return;
+    }
+
+    chrome.storage.local.set({ [APP_THEME_KEY]: normalizedTheme });
+}
+
+function loadThemeFromStorage() {
+    chrome.storage.local.get([APP_THEME_KEY], (result) => {
+        const storedTheme = normalizeTheme(result[APP_THEME_KEY] || DEFAULT_THEME);
+        setTheme(storedTheme, false);
+    });
+}
+
+window.ThemeManager = {
+    getTheme() {
+        return currentTheme;
+    },
+    setTheme(theme, persist = true) {
+        setTheme(theme, persist);
+    }
+};
 
 function formatDuration(milliseconds) {
     const totalSeconds = Math.max(0, Math.floor((Number(milliseconds) || 0) / 1000));
@@ -81,6 +121,8 @@ function startFocusSessionTimerLoop() {
 
 // ===== Initialize =====
 document.addEventListener('DOMContentLoaded', () => {
+    loadThemeFromStorage();
+
     // Load focus mode state from storage
     chrome.storage.local.get(['focusMode'], (result) => {
         if (result.focusMode) {

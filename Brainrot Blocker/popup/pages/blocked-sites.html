@@ -1,23 +1,23 @@
 <!-- Blocked Sites Page -->
 <div class="page-content blocked-sites-page">
     <div class="blocked-sites-form">
-        <label class="blocked-sites-label" for="blockedSiteInput">Lisää estettävä sivu</label>
+        <label class="blocked-sites-label" for="blockedSiteInput">Add a website to block</label>
         <div class="blocked-sites-input-row">
             <input
                 id="blockedSiteInput"
                 class="blocked-sites-input"
                 type="text"
-                placeholder="esim. youtube.com"
+                placeholder="e.g., youtube.com"
                 autocomplete="off"
             />
-            <button id="addBlockedSiteBtn" class="blocked-sites-add-btn">Lisää</button>
+            <button id="addBlockedSiteBtn" class="blocked-sites-add-btn">Add</button>
         </div>
-        <button id="addCurrentSiteBtn" class="blocked-sites-current-btn">Lisää nykyinen sivu</button>
+        <button id="addCurrentSiteBtn" class="blocked-sites-current-btn">Add Current Site</button>
         <p id="blockedSiteMessage" class="blocked-sites-message" aria-live="polite"></p>
     </div>
 
     <div class="blocked-sites-list-container">
-        <h3 class="blocked-sites-list-title">Estetyt sivut</h3>
+        <h3 class="blocked-sites-list-title">Blocked Sites</h3>
         <ul id="blockedSitesList" class="blocked-sites-list"></ul>
     </div>
 </div>

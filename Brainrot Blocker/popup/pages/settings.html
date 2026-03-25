@@ -1,4 +1,26 @@
 <!-- Settings Page -->
-<div class="page-content">
-    <p class="placeholder-text">⚙️ Settings coming soon...</p>
+<div class="page-content settings-page">
+    <section class="settings-card" aria-labelledby="themeSettingTitle">
+        <div class="settings-row">
+            <div class="settings-copy">
+                <h2 class="settings-title" id="themeSettingTitle">Appearance</h2>
+                <p class="settings-description">Switch between dark and light theme.</p>
+            </div>
+
+            <button
+                type="button"
+                id="themeToggle"
+                class="theme-toggle"
+                role="switch"
+                aria-checked="false"
+                aria-label="Toggle light theme"
+            >
+                <span class="theme-toggle-track" aria-hidden="true">
+                    <span class="theme-toggle-thumb"></span>
+                </span>
+            </button>
+        </div>
+
+        <p class="settings-theme-value" id="themeValue" aria-live="polite">Current theme: Dark</p>
+    </section>
 </div>
