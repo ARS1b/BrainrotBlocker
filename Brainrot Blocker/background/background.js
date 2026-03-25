@@ -295,32 +295,36 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
     }
 });
 
+// Kun alarm laukeaa: lähetä notifikaatio
 chrome.alarms.onAlarm.addListener((alarm) => {
-    if (!alarm || alarm.name !== 'timerDone') {
-        return;
-    }
-
-    chrome.notifications.create('timerNotification', {
+    if (alarm.name !== 'timerDone') return;
+ 
+    // Käytetään uniikkia ID:tä joka kerta — Chrome ei näytä uutta notifikaatiota
+    // jos vanha samalla ID:llä on vielä olemassa (käyttäjä ei ole sulkenut sitä)
+    const notifId = `timerNotification_${Date.now()}`;
+ 
+    chrome.notifications.create(notifId, {
         type:    'basic',
-        iconUrl: chrome.runtime.getURL('icons/icon128.png'), // ← absoluuttinen polku
+        iconUrl: chrome.runtime.getURL('icons/icon_timer_notification.png'),
         title:   '⏰ Study Timer – Aika loppui!',
         message: 'Asettamasi aika on kulunut loppuun. Klikkaa avataksesi.',
         priority: 2
     });
-
+ 
     chrome.storage.local.remove(['endTime', 'totalSeconds']);
-
+ 
     // Ilmoita popupille jos se on auki
     chrome.runtime.sendMessage({ type: 'TIMER_DONE' }).catch(() => {});
-}); // ← suljetaan onAlarm tässä
+});
 
 // Kun käyttäjä klikkaa notifikaatiota
+// startsWith-tarkistus koska ID sisältää nyt aikaleiman
 chrome.notifications.onClicked.addListener((notifId) => {
-    if (notifId !== 'timerNotification') return;
-
+    if (!notifId.startsWith('timerNotification_')) return;
+ 
     chrome.notifications.clear(notifId);
     chrome.storage.local.set({ pendingPage: 'timer' });
-
+ 
     chrome.action.openPopup().catch(() => {
         chrome.tabs.create({ url: chrome.runtime.getURL('popup/popup.html') });
     });
@@ -329,41 +333,11 @@ chrome.notifications.onClicked.addListener((notifId) => {
 // Listen for extension install
 chrome.runtime.onInstalled.addListener(() => {
     console.log('Brainrot Blocker installed!');
-
-    // Set default state
     chrome.storage.local.set({
         focusMode: false,
         blockedSites: [],
-        settings: {},
-        focusStats: {
-            totalMs: 0,
-            sites: {}
-        },
-        focusSessionStats: {
-            totalMs: 0,
-            sites: {}
-        },
-        focusSessionStartedAt: null,
-        endTime: null,
-        totalSeconds: null,
-        timerSiteHost: null,
-        timerAccountedMs: null
+        settings: {}
     });
-
-    chrome.storage.local.remove([
-        'focusSessionStartedAt',
-        'endTime',
-        'totalSeconds',
-        'timerSiteHost',
-        'timerAccountedMs'
-    ]);
-
-    tracker.focusMode = false;
-    tracker.activeHost = null;
-    tracker.lastTickMs = Date.now();
-    tracker.windowFocused = true;
-
-    chrome.alarms.clearAll();
 });
 
 chrome.runtime.onStartup.addListener(() => {
