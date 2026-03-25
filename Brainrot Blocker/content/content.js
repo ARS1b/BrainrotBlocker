@@ -98,11 +98,11 @@ function hostMatches(currentHost, blockedEntry) {
 function renderBlockedView(host) {
 	const blockedHtml = `
 <!doctype html>
-<html lang="fi">
+<html lang="en">
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Sivu estetty</title>
+	<title>Site Blocked</title>
 	<style>
 		* { box-sizing: border-box; }
 		body {
@@ -165,11 +165,11 @@ function renderBlockedView(host) {
 </head>
 <body>
 	<main class="blocked-card" role="dialog" aria-modal="true" aria-labelledby="blockedTitle">
-		<h1 class="blocked-title" id="blockedTitle">Sivu estetty</h1>
-		<p class="blocked-text"></p>
+		<h1 class="blocked-title" id="blockedTitle">Site Blocked</h1>
+		<p class="blocked-text">This site has been blocked.</p>
 		<p class="blocked-host">${escapeHtml(host)}</p>
 		<div class="blocked-actions">
-			<button class="blocked-btn" onclick="window.history.back()">Takaisin</button>
+			<button class="blocked-btn" onclick="window.history.back()">Go Back</button>
 		</div>
 	</main>
 </body>
