@@ -47,19 +47,19 @@ window.PageModules['blocked-sites'] = {
         const rawValue = this.input.value.trim();
 
         if (this.isNonBlockableGoogleInput(rawValue)) {
-            this.setMessage('Google.com-sivuja ei voi lisätä estolistaan.', true);
+            this.setMessage('Google front page cannot be added to the block list.', true);
             return;
         }
 
         const normalizedHost = this.normalizeSiteInput(rawValue);
 
-        this.addNormalizedHost(normalizedHost, 'Sivu lisätty estolistalle.');
+        this.addNormalizedHost(normalizedHost, 'Site added to block list.');
     },
 
     addCurrentTabSite() {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (chrome.runtime.lastError) {
-                this.setMessage('Nykyisen sivun haku epäonnistui.', true);
+                this.setMessage('Failed to retrieve current page.', true);
                 return;
             }
 
@@ -67,35 +67,35 @@ window.PageModules['blocked-sites'] = {
             const tabUrl = activeTab && typeof activeTab.url === 'string' ? activeTab.url : '';
 
             if (this.isNonBlockableUrl(tabUrl)) {
-                this.setMessage('Chromen aloitus-sivua ei voi lisätä estolistalle.', true);
+                this.setMessage('Chrome\'s start page cannot be added to the block list.', true);
                 return;
             }
 
             if (this.isNonBlockableGoogleInput(tabUrl)) {
-                this.setMessage('Google.com-sivuja ei voi lisäta estolistaan.', true);
+                this.setMessage('Google front page cannot be added to the block list.', true);
                 return;
             }
 
             const normalizedHost = this.normalizeSiteInput(tabUrl);
 
             if (!normalizedHost) {
-                this.setMessage('Tata sivua ei voi lisätä estolistalle.', true);
+                this.setMessage('The current page cannot be added to the block list.', true);
                 return;
             }
 
-            this.addNormalizedHost(normalizedHost, 'Nykyinen sivu lisätty estolistalle.');
+            this.addNormalizedHost(normalizedHost, 'Site added to block list.');
         });
     },
 
     addNormalizedHost(normalizedHost, successMessage) {
 
         if (!normalizedHost) {
-            this.setMessage('Anna kelvollinen URL tai domain, esim. youtube.com', true);
+            this.setMessage('Please enter a valid URL or domain, e.g., youtube.com', true);
             return;
         }
 
         if (this.blockedSites.includes(normalizedHost)) {
-            this.setMessage('Sivu on jo estolistalla.', true);
+            this.setMessage('Site is already on the block list.', true);
             return;
         }
 
@@ -111,7 +111,7 @@ window.PageModules['blocked-sites'] = {
     removeSite(hostToRemove) {
         this.blockedSites = this.blockedSites.filter((host) => host !== hostToRemove);
         this.persistBlockedSites(() => {
-            this.setMessage('Sivu poistettu estolistalta.', false);
+            this.setMessage('Site removed from block list.', false);
             this.renderBlockedSites();
         });
     },
@@ -131,7 +131,7 @@ window.PageModules['blocked-sites'] = {
     persistBlockedSites(callback) {
         chrome.storage.local.set({ blockedSites: this.blockedSites }, () => {
             if (chrome.runtime.lastError) {
-                this.setMessage('Tallennus epäonnistui. Yritä uudelleen.', true);
+                this.setMessage('Failed to save changes. Please try again.', true);
                 return;
             }
 
@@ -151,7 +151,7 @@ window.PageModules['blocked-sites'] = {
         if (this.blockedSites.length === 0) {
             const emptyItem = document.createElement('li');
             emptyItem.className = 'blocked-sites-empty';
-            emptyItem.textContent = 'Ei estettyjä sivuja vielä.';
+            emptyItem.textContent = 'No blocked sites yet.';
             this.list.appendChild(emptyItem);
             return;
         }
@@ -166,7 +166,7 @@ window.PageModules['blocked-sites'] = {
 
             const removeBtn = document.createElement('button');
             removeBtn.className = 'blocked-sites-remove-btn';
-            removeBtn.textContent = 'Poista';
+            removeBtn.textContent = 'Remove';
             removeBtn.addEventListener('click', () => {
                 this.removeSite(site);
             });

@@ -51,19 +51,19 @@
 
         if (state === 'running' || state === 'danger') {
             // Timer pyörii → nappi muuttuu pysäytysnapiksi, kenttä lukitaan
-            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pysäytä`;
+            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop`;
             elMinutes.disabled = true;
-            elSublabel.textContent = 'Aikaa jäljellä';
+            elSublabel.textContent = 'Time remaining';
         } else if (state === 'done') {
             // Aika loppui → nappi muuttuu "Uudelleen"-napiksi
-            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Uudelleen`;
+            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Restart`;
             elMinutes.disabled = false;
-            elSublabel.textContent = 'Aika loppui!';
+            elSublabel.textContent = 'Time is up!';
         } else {
             // Idle → näytä käynnistysnappi, avaa kenttä muokkaukselle
-            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Käynnistä`;
+            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Start`;
             elMinutes.disabled = false;
-            elSublabel.textContent = 'Aseta aika';
+            elSublabel.textContent = 'Set timer duration';
         }
     }
 
@@ -130,7 +130,7 @@
         const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
         elTime.textContent = formatTime(remaining);
         setUiState('idle');
-        elSublabel.textContent = 'Pysäytetty';
+        elSublabel.textContent = 'Paused';
     }
 
     // ── Merkitsee timerin valmiiksi kun aika loppuu ───────────────────────────

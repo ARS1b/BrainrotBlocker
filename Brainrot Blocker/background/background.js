@@ -306,8 +306,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     chrome.notifications.create(notifId, {
         type:    'basic',
         iconUrl: chrome.runtime.getURL('icons/icon_timer_notification.png'),
-        title:   '⏰ Study Timer – Aika loppui!',
-        message: 'Asettamasi aika on kulunut loppuun. Klikkaa avataksesi.',
+        title:   '⏰ Study Timer – Times up!',
+        message: 'Time you set is up. Click to open.',
         priority: 2
     });
 
