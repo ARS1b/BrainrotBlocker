@@ -298,11 +298,11 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
 // Kun alarm laukeaa: lähetä notifikaatio
 chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name !== 'timerDone') return;
- 
+
     // Käytetään uniikkia ID:tä joka kerta — Chrome ei näytä uutta notifikaatiota
     // jos vanha samalla ID:llä on vielä olemassa (käyttäjä ei ole sulkenut sitä)
     const notifId = `timerNotification_${Date.now()}`;
- 
+
     chrome.notifications.create(notifId, {
         type:    'basic',
         iconUrl: chrome.runtime.getURL('icons/icon_timer_notification.png'),
@@ -310,9 +310,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         message: 'Asettamasi aika on kulunut loppuun. Klikkaa avataksesi.',
         priority: 2
     });
- 
+
     chrome.storage.local.remove(['endTime', 'totalSeconds']);
- 
+
     // Ilmoita popupille jos se on auki
     chrome.runtime.sendMessage({ type: 'TIMER_DONE' }).catch(() => {});
 });
@@ -321,10 +321,10 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // startsWith-tarkistus koska ID sisältää nyt aikaleiman
 chrome.notifications.onClicked.addListener((notifId) => {
     if (!notifId.startsWith('timerNotification_')) return;
- 
+
     chrome.notifications.clear(notifId);
     chrome.storage.local.set({ pendingPage: 'timer' });
- 
+
     chrome.action.openPopup().catch(() => {
         chrome.tabs.create({ url: chrome.runtime.getURL('popup/popup.html') });
     });
