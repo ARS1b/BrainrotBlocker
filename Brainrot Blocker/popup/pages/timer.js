@@ -1,225 +1,225 @@
 // ===== Timer Page Module =====
-// Kääritään kaikki koodi IIFE-funktioon (Immediately Invoked Function Expression)
-// jotta muuttujat eivät vuoda globaaliin scopeen ja sotke muita sivuja
 (function () {
 
-    // ── Tila-muuttujat ────────────────────────────────────────────────────────
-    let timerInterval = null;   // setInterval-viite, jolla tick() ajetaan toistuvasti
-    let endTime       = null;   // millisekuntiaika (Date.now()-muodossa) jolloin timer loppuu
-    let totalSeconds  = 0;      // timerin kokonaiskesto sekunteina (esim. 5min = 300)
-    let isRunning     = false;  // onko timer käynnissä vai ei
+    let timerInterval  = null;   // setInterval reference for the tick() loop
+    let endTime        = null;   // timestamp (ms) when the timer ends
+    let totalSeconds   = 0;      // total duration in seconds
+    let pausedSeconds  = null;   // remaining seconds at pause time (null = not paused)
+    let isRunning      = false;
 
-    // DOM-elementtiviitteet — alustetaan getEls():ssä kun HTML on varmasti ladattu
     let elDisplay, elTime, elSublabel, elProgress, elMinutes, elStart, elReset, elDone;
+    let elQuickBtns;             // array of the three quick-select buttons
 
-    // ── Hakee DOM-elementit muuttujiin ────────────────────────────────────────
-    // Kutsutaan onEnter():ssa, koska timer.html ladataan dynaamisesti —
-    // elementit eivät ole olemassa ennen kuin HTML on lisätty sivulle
     function getEls() {
-        elDisplay  = document.getElementById('t-display');   // kehys jonka reunaväri vaihtuu
-        elTime     = document.getElementById('t-time');      // iso MM:SS-näyttö
-        elSublabel = document.getElementById('t-sublabel'); // pieni teksti näytön alla
-        elProgress = document.getElementById('t-progress'); // edistymispalkin täyttöosa
-        elMinutes  = document.getElementById('t-minutes');  // minuutti-syöttökenttä
-        elStart    = document.getElementById('t-start');    // käynnistä/pysäytä-nappi
-        elReset    = document.getElementById('t-reset');    // nollaa-nappi
-        elDone     = document.getElementById('t-done');     // "Aika loppui!" -banneri
+        elDisplay   = document.getElementById('t-display');
+        elTime      = document.getElementById('t-time');
+        elSublabel  = document.getElementById('t-sublabel');
+        elProgress  = document.getElementById('t-progress');
+        elMinutes   = document.getElementById('t-minutes');
+        elStart     = document.getElementById('t-start');
+        elReset     = document.getElementById('t-reset');
+        elDone      = document.getElementById('t-done');
+        elQuickBtns = document.querySelectorAll('.t-btn-quick');
     }
 
-    // ── Muuntaa sekunnit MM:SS-merkkijonoksi ─────────────────────────────────
-    // Esim. 125 sekuntia → "02:05"
     function formatTime(seconds) {
-        const m = Math.floor(seconds / 60); // kokonaiset minuutit
-        const s = seconds % 60;             // jäljelle jäävät sekunnit
-        // padStart(2, '0') lisää etunollan jos luku on yksittäinen, esim. 5 → "05"
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
         return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
 
-    // ── Päivittää käyttöliittymän vastaamaan timerin tilaa ───────────────────
-    // state-arvot:
-    //   'idle'    = odottaa käynnistystä tai on pysäytetty
-    //   'running' = timer käynnissä normaalisti
-    //   'danger'  = alle 10 sekuntia jäljellä (punainen väri)
-    //   'done'    = aika loppunut
+    // Highlights the quick button matching the current totalSeconds, clears others
+    function updateQuickActive() {
+        elQuickBtns.forEach(btn => {
+            const btnMinutes = parseInt(btn.dataset.minutes, 10);
+            btn.classList.toggle('active', btnMinutes * 60 === totalSeconds);
+        });
+    }
+
+    // Disables or enables the quick-select buttons
+    function setQuickDisabled(disabled) {
+        elQuickBtns.forEach(btn => { btn.disabled = disabled; });
+    }
+
     function setUiState(state) {
-        // Vaihda kehyksen CSS-luokka → CSS hoitaa värinvaihdot automaattisesti
         elDisplay.className  = `t-display ${state}`;
-        // Vaihda edistymispalkin väri punaiseksi danger/done-tiloissa
         elProgress.className = `t-progress-fill${state === 'danger' || state === 'done' ? ' danger' : ''}`;
-        // Näytä tai piilota "Aika loppui!" -banneri
         elDone.classList.toggle('visible', state === 'done');
 
         if (state === 'running' || state === 'danger') {
-            // Timer pyörii → nappi muuttuu pysäytysnapiksi, kenttä lukitaan
-            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop`;
+            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause`;
             elMinutes.disabled = true;
             elSublabel.textContent = 'Time remaining';
+            setQuickDisabled(true);
+        } else if (state === 'paused') {
+            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Resume`;
+            elMinutes.disabled = true;
+            elSublabel.textContent = 'Paused';
+            setQuickDisabled(true);   // can't change duration mid-session
         } else if (state === 'done') {
-            // Aika loppui → nappi muuttuu "Uudelleen"-napiksi
-            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Restart`;
+            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Start again`;
             elMinutes.disabled = false;
-            elSublabel.textContent = 'Time is up!';
+            elSublabel.textContent = "Time's up!";
+            setQuickDisabled(false);
         } else {
-            // Idle → näytä käynnistysnappi, avaa kenttä muokkaukselle
+            // idle
             elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Start`;
             elMinutes.disabled = false;
-            elSublabel.textContent = 'Set timer duration';
+            elSublabel.textContent = 'Set duration';
+            setQuickDisabled(false);
         }
     }
 
-    // ── Päivittää edistymispalkin leveyden ───────────────────────────────────
-    // Laskee kuinka monta prosenttia ajasta on jäljellä ja asettaa palkin leveydeksi
-    // Esim. 30s jäljellä / 60s yhteensä = 50% → palkki puolivälissä
     function updateProgress(remainingSeconds) {
         const pct = totalSeconds > 0 ? (remainingSeconds / totalSeconds) * 100 : 100;
         elProgress.style.width = `${pct}%`;
     }
 
-    // ── Timerin "sydämenlyönti" — ajetaan joka 500ms ─────────────────────────
-    // Laskee jäljellä olevan ajan, päivittää näytön ja tarkistaa onko aika loppunut
     function tick() {
-        // Lasketaan jäljellä olevat sekunnit: loppumisaika miinus nyt
-        // Math.max(0, ...) estää negatiiviset arvot jos tick() viivästyy
         const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
-
-        // Päivitä näyttö ja edistymispalkki
         elTime.textContent = formatTime(remaining);
         updateProgress(remaining);
-
-        // Jos aika on loppunut, siirry finishTimer():iin eikä jatketa
         if (remaining <= 0) { finishTimer(); return; }
-
-        // Alle 10 sekuntia jäljellä → varoitustila (punainen)
         if (remaining <= 10) setUiState('danger');
     }
 
-    // ── Käynnistää timerin ───────────────────────────────────────────────────
-    // Lukee minuutit kentästä, laskee loppumisajan ja käynnistää tick()-silmukan
     function startTimer() {
-        const minutes = parseInt(elMinutes.value, 10);
-        // Varmista että arvo on järkevä ennen käynnistystä
-        if (!minutes || minutes < 1) { elMinutes.focus(); return; }
+        let seconds;
 
-        totalSeconds = minutes * 60;
-        // Tallenna loppumisaika: nykyhetki + kesto millisekunteina
-        endTime = Date.now() + totalSeconds * 1000;
+        if (pausedSeconds !== null) {
+            // Resume from where we left off
+            seconds = pausedSeconds;
+            pausedSeconds = null;
+        } else {
+            // Fresh start — read from input field
+            const minutes = parseInt(elMinutes.value, 10);
+            if (!minutes || minutes < 1) { elMinutes.focus(); return; }
+            seconds = minutes * 60;
+            totalSeconds = seconds;
+            updateQuickActive(); // highlight matching quick button if any
+        }
+
+        endTime   = Date.now() + seconds * 1000;
         isRunning = true;
 
-        // Tallenna storage:en jotta background.js ja muut sivut tietävät timerista
         chrome.storage.local.set({ endTime, totalSeconds });
-        // Pyydä background.js:ää laukaisemaan alarm kun aika on kulunut
-        // → alarm toimii vaikka popup olisi suljettuna
         chrome.alarms.create('timerDone', { when: endTime });
 
-        tick(); // aja heti ensimmäinen tick jotta näyttö päivittyy viiveettä
-        timerInterval = setInterval(tick, 500); // jatka 500ms välein
+        tick();
+        timerInterval = setInterval(tick, 500);
         setUiState('running');
     }
 
-    // ── Pysäyttää timerin väliaikaisesti ─────────────────────────────────────
-    // Ei nollaa aikaa — käyttäjä voi jatkaa myöhemmin (tällä hetkellä jäljellä oleva aika näkyy)
     function pauseTimer() {
-        clearInterval(timerInterval); timerInterval = null; // pysäytä tick-silmukka
+        clearInterval(timerInterval); timerInterval = null;
         isRunning = false;
 
-        // Peruuta alarm koska timer ei enää etene
+        // Save remaining time so startTimer() can resume from here
+        pausedSeconds = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+
         chrome.alarms.clear('timerDone');
         chrome.storage.local.remove(['endTime', 'totalSeconds']);
 
-        // Näytä pysäytyshetken aika jottei näyttö hyppää
-        const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
-        elTime.textContent = formatTime(remaining);
-        setUiState('idle');
-        elSublabel.textContent = 'Paused';
+        elTime.textContent = formatTime(pausedSeconds);
+        updateProgress(pausedSeconds);
+        setUiState('paused');
     }
 
-    // ── Merkitsee timerin valmiiksi kun aika loppuu ───────────────────────────
-    // Kutsutaan joko tick():stä (aika luonnollisesti nolla) tai background.js:n
-    // TIMER_DONE-viestistä (timer loppui kun popup oli kiinni)
     function finishTimer() {
         clearInterval(timerInterval); timerInterval = null;
-        isRunning = false;
+        isRunning     = false;
+        pausedSeconds = null;
         elTime.textContent = '00:00';
         elProgress.style.width = '0%';
-        // Storage on jo siivottu background.js:ssä, mutta varmistetaan tässäkin
         chrome.storage.local.remove(['endTime', 'totalSeconds']);
         setUiState('done');
     }
 
-    // ── Nollaa timerin täysin alkutilaan ─────────────────────────────────────
     function resetTimer() {
         clearInterval(timerInterval); timerInterval = null;
-        isRunning = false; endTime = null; totalSeconds = 0;
+        isRunning     = false;
+        pausedSeconds = null;
+        endTime       = null;
+        totalSeconds  = 0;
         chrome.alarms.clear('timerDone');
         chrome.storage.local.remove(['endTime', 'totalSeconds']);
         elTime.textContent = '00:00';
-        elProgress.style.width = '100%'; // palauta palkki täyteen
-        elMinutes.value = '';            // tyhjennä syöttökenttä
+        elProgress.style.width = '100%';
+        elMinutes.value = '';
+        elQuickBtns.forEach(btn => btn.classList.remove('active'));
         setUiState('idle');
     }
 
-    // ── Käsittelee background.js:ltä tulevat viestit ─────────────────────────
-    // Background lähettää TIMER_DONE:n kun alarm laukeaa ja popup on auki
+    // Sets the input field to the chosen minutes and highlights the button
+    function applyQuickSelect(minutes) {
+        elMinutes.value = minutes;
+        totalSeconds = minutes * 60;
+        updateQuickActive();
+    }
+
     function onMessage(msg) {
         if (msg.type === 'TIMER_DONE') finishTimer();
     }
 
-    // ── Rekisteröi moduuli navigointijärjestelmään ────────────────────────────
-    // popup.js kutsuu onEnter():a kun timer-sivulle navigoidaan
-    // ja onLeave():a kun sivulta poistutaan
     window.PageModules = window.PageModules || {};
     window.PageModules.timer = {
 
-        // Kutsutaan kun timer-sivulle saavutaan
-        // HTML on jo ladattu tässä vaiheessa joten DOM-elementit löytyvät
         onEnter() {
-            getEls(); // hae DOM-viitteet nyt kun HTML on varmasti paikallaan
+            getEls();
 
-            // Tarkista storagesta onko timer jo käynnissä taustalla
-            // (esim. käyttäjä navigoi pois ja tuli takaisin)
+            // Restore state if timer is already running in the background
             chrome.storage.local.get(['endTime', 'totalSeconds'], (data) => {
                 if (data.endTime && data.totalSeconds) {
                     const remaining = Math.round((data.endTime - Date.now()) / 1000);
                     if (remaining > 0) {
-                        // Timer pyörii edelleen — jatka siitä mihin jäätiin
                         endTime      = data.endTime;
                         totalSeconds = data.totalSeconds;
                         isRunning    = true;
-                        elMinutes.value = Math.ceil(totalSeconds / 60); // näytä alkuperäinen aika kentässä
+                        elMinutes.value = Math.ceil(totalSeconds / 60);
+                        updateQuickActive();
                         tick();
                         timerInterval = setInterval(tick, 500);
                         setUiState(remaining <= 10 ? 'danger' : 'running');
                     } else {
-                        // Timer on jo loppunut taustalla (esim. selain oli kiinni)
                         finishTimer();
                     }
                 }
-                // Jos storagessa ei ole dataa → timer ei ole käynnissä, jätetään idle-tilaan
             });
 
-            // Rekisteröi napit — addEventListener lisätään joka kerta onEnter:ssa
-            // koska HTML ladataan uudelleen joka kerta kun sivulle tullaan
-            elStart.addEventListener('click', () => isRunning ? pauseTimer() : startTimer());
+            // Quick-select buttons: fill the input and highlight the chosen button
+            elQuickBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    applyQuickSelect(parseInt(btn.dataset.minutes, 10));
+                });
+            });
+
+            elStart.addEventListener('click', () => {
+                if (isRunning) {
+                    pauseTimer();
+                } else {
+                    startTimer();
+                }
+            });
+
             elReset.addEventListener('click', resetTimer);
-            // Enter-näppäin käynnistää timerin syöttökentästä
+
             elMinutes.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !isRunning) startTimer();
+                if (e.key === 'Enter' && !isRunning && pausedSeconds === null) startTimer();
             });
 
-            // Ala kuunnella background.js:n viestejä
+            // Clear quick-button highlight when user types a custom value
+            elMinutes.addEventListener('input', () => {
+                elQuickBtns.forEach(btn => btn.classList.remove('active'));
+            });
+
             chrome.runtime.onMessage.addListener(onMessage);
         },
 
-        // Kutsutaan kun timer-sivulta poistutaan (esim. palataan pääsivulle)
         onLeave() {
-            // Pysäytä tick-silmukka muistin säästämiseksi —
-            // mutta ÄLÄ peruuta alarmia koska timer jatkaa laskentaa taustalla!
-            // Storage säilyy joten onEnter() osaa jatkaa oikeasta kohdasta
             clearInterval(timerInterval);
             timerInterval = null;
-            isRunning = false; // vain lokaalisti — storagessa tila säilyy
-
-            // Lopeta viestin kuuntelu jottei finishTimer() kutsuta väärällä sivulla
+            isRunning = false;
+            // pausedSeconds is kept in memory so resuming works if user comes back
             chrome.runtime.onMessage.removeListener(onMessage);
         }
     };

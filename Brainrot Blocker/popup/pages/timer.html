@@ -72,6 +72,43 @@
     }
     .t-progress-fill.danger { background: #ff4f4f; }
 
+    /* Quick select buttons */
+    .t-quick-row {
+      display: flex;
+      gap: 8px;
+    }
+    .t-btn-quick {
+      flex: 1;
+      padding: 7px 0;
+      background: var(--surface, #16161a);
+      border: 1px solid var(--border, #2a2a32);
+      border-radius: 8px;
+      color: var(--muted, #5a5a6e);
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .t-btn-quick:hover {
+      border-color: #e8ff47;
+      color: #e8ff47;
+    }
+    .t-btn-quick.active {
+      border-color: #e8ff47;
+      color: #e8ff47;
+      background: rgba(232,255,71,0.06);
+    }
+    .t-btn-quick:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      border-color: var(--border, #2a2a32);
+      color: var(--muted, #5a5a6e);
+      background: var(--surface, #16161a);
+    }
+
     /* Input row */
     .t-input-row {
       display: flex;
@@ -154,11 +191,18 @@
 
   <div class="t-display" id="t-display">
     <div class="t-time" id="t-time">00:00</div>
-    <div class="t-sublabel" id="t-sublabel">Set time</div>
+    <div class="t-sublabel" id="t-sublabel">Set duration</div>
   </div>
 
   <div class="t-progress-track">
     <div class="t-progress-fill" id="t-progress"></div>
+  </div>
+
+  <!-- Quick select buttons -->
+  <div class="t-quick-row">
+    <button class="t-btn-quick" id="t-quick-45" data-minutes="45">45 min</button>
+    <button class="t-btn-quick" id="t-quick-60" data-minutes="60">1 hour</button>
+    <button class="t-btn-quick" id="t-quick-90" data-minutes="90">1.5 hours</button>
   </div>
 
   <div class="t-input-row">
@@ -166,7 +210,7 @@
       <input class="t-input" type="number" id="t-minutes" min="1" max="999" placeholder="0" />
       <span class="t-unit">min</span>
     </div>
-    <button class="t-btn t-btn-reset" id="t-reset" title="Reset timer">
+    <button class="t-btn t-btn-reset" id="t-reset" title="Reset">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
         <path d="M3 3v5h5"/>
@@ -179,5 +223,5 @@
     Start
   </button>
 
-  <div class="t-done-banner" id="t-done">⏰ Time is up!</div>
+  <div class="t-done-banner" id="t-done">⏰ Time's up!</div>
 </div>
