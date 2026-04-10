@@ -166,11 +166,9 @@ function renderBlockedView(host) {
 <body>
 	<main class="blocked-card" role="dialog" aria-modal="true" aria-labelledby="blockedTitle">
 		<h1 class="blocked-title" id="blockedTitle">Site Blocked</h1>
-		<p class="blocked-text">This site has been blocked.</p>
+		<br />
 		<p class="blocked-host">${escapeHtml(host)}</p>
-		<div class="blocked-actions">
-			<button class="blocked-btn" onclick="window.history.back()">Go Back</button>
-		</div>
+		<br />
 	</main>
 </body>
 </html>

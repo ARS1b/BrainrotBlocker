@@ -13,7 +13,7 @@ window.PageModules['blocked-sites'] = {
     onLeave() {
     },
 
-    // Alustus - kutsutaan joka kerta kun sivu avataan (DOM ladataan uudelleen)
+    // Alustus - kutsutaan joka kerta kun sivu avataan
     init() {
         this.input = document.getElementById('blockedSiteInput');
         this.addButton = document.getElementById('addBlockedSiteBtn');
