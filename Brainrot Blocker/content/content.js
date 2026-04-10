@@ -95,6 +95,7 @@ function hostMatches(currentHost, blockedEntry) {
 	return currentHost === blockedHost || currentHost.endsWith(`.${blockedHost}`);
 }
 
+//blockatun sivun näkymä
 function renderBlockedView(host) {
 	const blockedHtml = `
 <!doctype html>

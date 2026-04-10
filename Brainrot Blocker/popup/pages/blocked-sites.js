@@ -46,6 +46,7 @@ window.PageModules['blocked-sites'] = {
     addCurrentInput() {
         const rawValue = this.input.value.trim();
 
+        //googlen front pagea ei voi lisätä estolistalle
         if (this.isNonBlockableGoogleInput(rawValue)) {
             this.setMessage('Google front page cannot be added to the block list.', true);
             return;
@@ -67,6 +68,7 @@ window.PageModules['blocked-sites'] = {
             const tabUrl = activeTab && typeof activeTab.url === 'string' ? activeTab.url : '';
 
             if (this.isNonBlockableUrl(tabUrl)) {
+                //chrome front pagea ei voi lisätä estolistalle
                 this.setMessage('Chrome\'s start page cannot be added to the block list.', true);
                 return;
             }
@@ -93,7 +95,7 @@ window.PageModules['blocked-sites'] = {
             this.setMessage('Please enter a valid URL or domain, e.g., youtube.com', true);
             return;
         }
-
+        //ei voi lisätä samaa sivua uudestaan estolistalle
         if (this.blockedSites.includes(normalizedHost)) {
             this.setMessage('Site is already on the block list.', true);
             return;
@@ -108,6 +110,7 @@ window.PageModules['blocked-sites'] = {
         });
     },
 
+    // Poistaa sivun estolistalta
     removeSite(hostToRemove) {
         this.blockedSites = this.blockedSites.filter((host) => host !== hostToRemove);
         this.persistBlockedSites(() => {
@@ -116,6 +119,7 @@ window.PageModules['blocked-sites'] = {
         });
     },
 
+    // Lataa estolistalle tallennetut sivut
     loadBlockedSites() {
         chrome.storage.local.get(['blockedSites'], (result) => {
             const stored = Array.isArray(result.blockedSites) ? result.blockedSites : [];
@@ -186,6 +190,8 @@ window.PageModules['blocked-sites'] = {
         this.message.classList.toggle('error', Boolean(isError));
     },
 
+
+    // Normalisoi syötteen host-muotoon, palauttaa null jos syöte ei ole validi tai estolistalle lisättävä
     normalizeSiteInput(value) {
         if (!value || typeof value !== 'string') {
             return null;

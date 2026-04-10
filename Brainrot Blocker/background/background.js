@@ -230,7 +230,7 @@ function flushTrackedTime() {
     tracker.lastTickMs = now;
 }
 
-// Listen for messages from popup
+// Listen for messages from popup/devtools and respond accordingly
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'FOCUS_MODE_CHANGED') {
         flushTrackedTime();
