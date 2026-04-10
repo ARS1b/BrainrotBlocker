@@ -4,6 +4,12 @@ const FOCUS_STATS_KEY = 'focusStats';
 const FOCUS_SESSION_KEY = 'focusSessionStats';
 const FOCUS_SESSION_STARTED_AT_KEY = 'focusSessionStartedAt';
 const FALLBACK_HOST = 'unknown-site';
+const APP_LOCALE_KEY = 'appLocale';
+const SUPPORTED_LOCALES = ['en', 'fi'];
+const DEFAULT_LOCALE_PREFERENCE = 'browser';
+
+let backgroundMessages = {};
+let backgroundMessagesPromise = null;
 
 const tracker = {
     focusMode: false,
@@ -11,6 +17,74 @@ const tracker = {
     lastTickMs: null,
     windowFocused: true
 };
+
+function normalizeLocalePreference(value) {
+    if (value === 'en' || value === 'fi' || value === 'browser') {
+        return value;
+    }
+
+    return DEFAULT_LOCALE_PREFERENCE;
+}
+
+function resolveBrowserLocale() {
+    const uiLanguage = (chrome.i18n?.getUILanguage?.() || 'en').toLowerCase();
+    return uiLanguage.startsWith('fi') ? 'fi' : 'en';
+}
+
+function resolveEffectiveLocale(preference) {
+    if (preference === 'browser') {
+        return resolveBrowserLocale();
+    }
+
+    return SUPPORTED_LOCALES.includes(preference) ? preference : 'en';
+}
+
+async function fetchLocaleMessages(locale) {
+    const localeFileUrl = chrome.runtime.getURL(`popup/locales/${locale}.json`);
+    const response = await fetch(localeFileUrl);
+
+    if (!response.ok) {
+        throw new Error(`Failed to load locale file: ${locale}`);
+    }
+
+    return response.json();
+}
+
+function loadBackgroundMessages(forceReload = false) {
+    if (backgroundMessagesPromise && !forceReload) {
+        return backgroundMessagesPromise;
+    }
+
+    backgroundMessagesPromise = new Promise((resolve) => {
+        chrome.storage.local.get([APP_LOCALE_KEY], async (result) => {
+            const preference = normalizeLocalePreference(result[APP_LOCALE_KEY]);
+            const locale = resolveEffectiveLocale(preference);
+
+            try {
+                backgroundMessages = await fetchLocaleMessages(locale);
+            } catch (_error) {
+                try {
+                    backgroundMessages = await fetchLocaleMessages('en');
+                } catch (_fallbackError) {
+                    backgroundMessages = {};
+                }
+            }
+
+            resolve();
+        });
+    });
+
+    return backgroundMessagesPromise;
+}
+
+function tBackground(key) {
+    const value = backgroundMessages[key];
+    if (typeof value === 'string') {
+        return value;
+    }
+
+    return `[${key}]`;
+}
 
 function emptyStats() {
     return {
@@ -303,12 +377,14 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     // jos vanha samalla ID:llä on vielä olemassa (käyttäjä ei ole sulkenut sitä)
     const notifId = `timerNotification_${Date.now()}`;
 
-    chrome.notifications.create(notifId, {
-        type:    'basic',
-        iconUrl: chrome.runtime.getURL('icons/icon_timer_notification.png'),
-        title:   '⏰ Study Timer – Times up!',
-        message: 'Time you set is up. Click to open.',
-        priority: 2
+    loadBackgroundMessages().finally(() => {
+        chrome.notifications.create(notifId, {
+            type:    'basic',
+            iconUrl: chrome.runtime.getURL('icons/icon_timer_notification.png'),
+            title:   tBackground('background.notification.timerDoneTitle'),
+            message: tBackground('background.notification.timerDoneMessage'),
+            priority: 2
+        });
     });
 
     chrome.storage.local.remove(['endTime', 'totalSeconds']);
@@ -356,6 +432,8 @@ chrome.runtime.onStartup.addListener(() => {
         }
     });
     chrome.storage.local.remove([FOCUS_SESSION_STARTED_AT_KEY]);
+
+    loadBackgroundMessages(true);
 });
 
 // Initialize tracker when service worker wakes up.
@@ -366,4 +444,14 @@ chrome.storage.local.get(['focusMode'], (result) => {
     tracker.activeHost = null;
     updateActiveHostFromCurrentTab();
 });
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local' || !changes[APP_LOCALE_KEY]) {
+        return;
+    }
+
+    loadBackgroundMessages(true);
+});
+
+loadBackgroundMessages();
 

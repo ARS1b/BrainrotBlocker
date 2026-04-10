@@ -3,8 +3,8 @@
     <section class="settings-card" aria-labelledby="themeSettingTitle">
         <div class="settings-row">
             <div class="settings-copy">
-                <h2 class="settings-title" id="themeSettingTitle">Appearance</h2>
-                <p class="settings-description">Switch between dark and light theme.</p>
+                <h2 class="settings-title" id="themeSettingTitle" data-i18n="settings.appearance.title">Appearance</h2>
+                <p class="settings-description" data-i18n="settings.appearance.desc">Switch between dark and light theme.</p>
             </div>
 
             <button
@@ -13,6 +13,7 @@
                 class="theme-toggle"
                 role="switch"
                 aria-checked="false"
+                data-i18n-aria-label="settings.appearance.toggleAria"
                 aria-label="Toggle light theme"
             >
                 <span class="theme-toggle-track" aria-hidden="true">
@@ -22,5 +23,18 @@
         </div>
 
         <p class="settings-theme-value" id="themeValue" aria-live="polite">Current theme: Dark</p>
+    </section>
+
+    <section class="settings-card" aria-labelledby="languageSettingTitle">
+        <div class="settings-copy">
+            <h2 class="settings-title" id="languageSettingTitle" data-i18n="settings.language.title">Language</h2>
+            <p class="settings-description" data-i18n="settings.language.desc">Use browser language by default, or choose manually.</p>
+        </div>
+
+        <select id="localeSelect" class="settings-select" data-i18n-aria-label="settings.language.selectAria" aria-label="Select application language">
+            <option value="browser" data-i18n="settings.language.option.browser">Browser default</option>
+            <option value="en" data-i18n="settings.language.option.en">English</option>
+            <option value="fi" data-i18n="settings.language.option.fi">Suomi</option>
+        </select>
     </section>
 </div>

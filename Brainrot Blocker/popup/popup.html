@@ -15,7 +15,7 @@
                     <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
             </button>
-            <h1 class="header-title" id="headerTitle">🧠 Brainrot Blocker</h1>
+            <h1 class="header-title" id="headerTitle" data-i18n="popup.header.main">🧠 Brainrot Blocker</h1>
         </header>
 
         <!-- Main Menu Page -->
@@ -27,7 +27,7 @@
                     <span class="status-text">Focus Mode: OFF</span>
                 </div>
                 <div class="focus-session-timer" id="focusSessionTimer">00:00:00</div>
-                <button class="focus-toggle-btn" id="focusToggleBtn">
+                <button class="focus-toggle-btn" id="focusToggleBtn" data-i18n="popup.focus.start">
                     Start Focusing
                 </button>
             </div>
@@ -37,8 +37,8 @@
                 <button class="menu-item" data-page="blocked-sites">
                     <div class="menu-item-icon">🚫</div>
                     <div class="menu-item-content">
-                        <span class="menu-item-title">Blocked Sites</span>
-                        <span class="menu-item-desc">Manage websites to block</span>
+                        <span class="menu-item-title" data-i18n="popup.menu.blockedSites.title">Blocked Sites</span>
+                        <span class="menu-item-desc" data-i18n="popup.menu.blockedSites.desc">Manage websites to block</span>
                     </div>
                     <svg class="menu-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="9 18 15 12 9 6"></polyline>
@@ -48,8 +48,8 @@
                 <button class="menu-item" data-page="timer">
                     <div class="menu-item-icon">⏱️</div>
                     <div class="menu-item-content">
-                        <span class="menu-item-title">Study Timer</span>
-                        <span class="menu-item-desc">Pomodoro & focus sessions</span>
+                        <span class="menu-item-title" data-i18n="popup.menu.timer.title">Study Timer</span>
+                        <span class="menu-item-desc" data-i18n="popup.menu.timer.desc">Pomodoro & focus sessions</span>
                     </div>
                     <svg class="menu-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="9 18 15 12 9 6"></polyline>
@@ -59,8 +59,8 @@
                 <button class="menu-item" data-page="stats">
                     <div class="menu-item-icon">📊</div>
                     <div class="menu-item-content">
-                        <span class="menu-item-title">Statistics</span>
-                        <span class="menu-item-desc">View your focus history</span>
+                        <span class="menu-item-title" data-i18n="popup.menu.stats.title">Statistics</span>
+                        <span class="menu-item-desc" data-i18n="popup.menu.stats.desc">View your focus history</span>
                     </div>
                     <svg class="menu-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="9 18 15 12 9 6"></polyline>
@@ -70,8 +70,8 @@
                 <button class="menu-item" data-page="settings">
                     <div class="menu-item-icon">⚙️</div>
                     <div class="menu-item-content">
-                        <span class="menu-item-title">Settings</span>
-                        <span class="menu-item-desc">Customize your experience</span>
+                        <span class="menu-item-title" data-i18n="popup.menu.settings.title">Settings</span>
+                        <span class="menu-item-desc" data-i18n="popup.menu.settings.desc">Customize your experience</span>
                     </div>
                     <svg class="menu-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="9 18 15 12 9 6"></polyline>
@@ -86,9 +86,11 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <span>Brainrot Blocker v1.0</span>
+            <span data-i18n="popup.footer.version">Brainrot Blocker v1.0</span>
         </footer>
     </div>
+
+    <script src="i18n.js"></script>
 
     <!-- Sivukohtaiset moduulit -->
     <script src="pages/blocked-sites.js"></script>

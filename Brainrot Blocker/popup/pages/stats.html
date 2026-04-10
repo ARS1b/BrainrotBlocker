@@ -150,26 +150,26 @@
 
     <div class="stats-cards">
         <article class="stats-card">
-            <p class="stats-card-label">Current Session</p>
+            <p class="stats-card-label" data-i18n="stats.card.currentSession">Current Session</p>
             <p class="stats-card-value" id="sessionFocusTime">00:00:00</p>
         </article>
 
         <article class="stats-card">
-            <p class="stats-card-label">Overall</p>
+            <p class="stats-card-label" data-i18n="stats.card.overall">Overall</p>
             <p class="stats-card-value" id="overallFocusTime">00:00:00</p>
         </article>
     </div>
 
     <section class="stats-panel" aria-labelledby="siteStatsTitle">
         <div class="stats-panel-header">
-            <h2 class="stats-panel-title" id="siteStatsTitle">Time By Site</h2>
+            <h2 class="stats-panel-title" id="siteStatsTitle" data-i18n="stats.panel.title">Time By Site</h2>
             <div class="stats-panel-actions">
-                <button type="button" class="stats-refresh-btn" id="refreshStatsBtn">Refresh</button>
-                <button type="button" class="stats-reset-btn" id="resetStatsBtn">Reset Overall</button>
+                <button type="button" class="stats-refresh-btn" id="refreshStatsBtn" data-i18n="stats.button.refresh">Refresh</button>
+                <button type="button" class="stats-reset-btn" id="resetStatsBtn" data-i18n="stats.button.resetOverall">Reset Overall</button>
             </div>
         </div>
 
         <ul class="site-stats-list" id="siteStatsList"></ul>
-        <p class="site-stats-empty" id="siteStatsEmpty">No focus time recorded yet.</p>
+        <p class="site-stats-empty" id="siteStatsEmpty" data-i18n="stats.empty.noFocusYet">No focus time recorded yet.</p>
     </section>
 </div>

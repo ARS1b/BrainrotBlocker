@@ -10,6 +10,22 @@
     let elDisplay, elTime, elSublabel, elProgress, elMinutes, elStart, elReset, elDone;
     let elQuickBtns;             // array of the three quick-select buttons
 
+    function t(key) {
+        if (window.I18n?.t) {
+            return window.I18n.t(key);
+        }
+
+        return key;
+    }
+
+    function startButtonMarkup(label) {
+        return `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> ${label}`;
+    }
+
+    function pauseButtonMarkup(label) {
+        return `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> ${label}`;
+    }
+
     function getEls() {
         elDisplay   = document.getElementById('t-display');
         elTime      = document.getElementById('t-time');
@@ -47,25 +63,25 @@
         elDone.classList.toggle('visible', state === 'done');
 
         if (state === 'running' || state === 'danger') {
-            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause`;
+            elStart.innerHTML = pauseButtonMarkup(t('timer.button.pause'));
             elMinutes.disabled = true;
-            elSublabel.textContent = 'Time remaining';
+            elSublabel.textContent = t('timer.sublabel.timeRemaining');
             setQuickDisabled(true);
         } else if (state === 'paused') {
-            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Resume`;
+            elStart.innerHTML = startButtonMarkup(t('timer.button.resume'));
             elMinutes.disabled = true;
-            elSublabel.textContent = 'Paused';
+            elSublabel.textContent = t('timer.sublabel.paused');
             setQuickDisabled(true);   // can't change duration mid-session
         } else if (state === 'done') {
-            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Start again`;
+            elStart.innerHTML = startButtonMarkup(t('timer.button.startAgain'));
             elMinutes.disabled = false;
-            elSublabel.textContent = "Time's up!";
+            elSublabel.textContent = t('timer.sublabel.timesUp');
             setQuickDisabled(false);
         } else {
             // idle
-            elStart.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Start`;
+            elStart.innerHTML = startButtonMarkup(t('timer.button.start'));
             elMinutes.disabled = false;
-            elSublabel.textContent = 'Set duration';
+            elSublabel.textContent = t('timer.sublabel.setDuration');
             setQuickDisabled(false);
         }
     }
@@ -167,6 +183,10 @@
         onEnter() {
             getEls();
 
+            if (window.I18n?.apply) {
+                window.I18n.apply(document.getElementById('page-dynamic'));
+            }
+
             // Restore state if timer is already running in the background
             chrome.storage.local.get(['endTime', 'totalSeconds'], (data) => {
                 if (data.endTime && data.totalSeconds) {
@@ -213,6 +233,30 @@
             });
 
             chrome.runtime.onMessage.addListener(onMessage);
+        },
+
+        onLocaleChanged() {
+            if (window.I18n?.apply) {
+                window.I18n.apply(document.getElementById('page-dynamic'));
+            }
+
+            if (isRunning) {
+                const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+                setUiState(remaining <= 10 ? 'danger' : 'running');
+                return;
+            }
+
+            if (pausedSeconds !== null) {
+                setUiState('paused');
+                return;
+            }
+
+            if (elDone.classList.contains('visible')) {
+                setUiState('done');
+                return;
+            }
+
+            setUiState('idle');
         },
 
         onLeave() {

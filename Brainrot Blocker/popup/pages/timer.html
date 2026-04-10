@@ -130,6 +130,7 @@
       font-size: 16px;
       outline: none;
       transition: border-color 0.2s;
+      appearance: textfield;
       -moz-appearance: textfield;
     }
     .t-input::-webkit-inner-spin-button,
@@ -191,7 +192,7 @@
 
   <div class="t-display" id="t-display">
     <div class="t-time" id="t-time">00:00</div>
-    <div class="t-sublabel" id="t-sublabel">Set duration</div>
+    <div class="t-sublabel" id="t-sublabel" data-i18n="timer.sublabel.setDuration">Set duration</div>
   </div>
 
   <div class="t-progress-track">
@@ -200,17 +201,17 @@
 
   <!-- Quick select buttons -->
   <div class="t-quick-row">
-    <button class="t-btn-quick" id="t-quick-45" data-minutes="45">45 min</button>
-    <button class="t-btn-quick" id="t-quick-60" data-minutes="60">1 hour</button>
-    <button class="t-btn-quick" id="t-quick-90" data-minutes="90">1.5 hours</button>
+    <button class="t-btn-quick" id="t-quick-45" data-minutes="45" data-i18n="timer.quick.45">45 min</button>
+    <button class="t-btn-quick" id="t-quick-60" data-minutes="60" data-i18n="timer.quick.60">1 hour</button>
+    <button class="t-btn-quick" id="t-quick-90" data-minutes="90" data-i18n="timer.quick.90">1.5 hours</button>
   </div>
 
   <div class="t-input-row">
     <div class="t-input-wrap">
-      <input class="t-input" type="number" id="t-minutes" min="1" max="999" placeholder="0" />
-      <span class="t-unit">min</span>
+      <input class="t-input" type="number" id="t-minutes" min="1" max="999" data-i18n-placeholder="timer.input.placeholder" placeholder="0" />
+      <span class="t-unit" data-i18n="timer.unit.min">min</span>
     </div>
-    <button class="t-btn t-btn-reset" id="t-reset" title="Reset">
+    <button class="t-btn t-btn-reset" id="t-reset" data-i18n-title="timer.button.resetTitle" title="Reset">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
         <path d="M3 3v5h5"/>
@@ -220,8 +221,8 @@
 
   <button class="t-btn t-btn-start" id="t-start">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-    Start
+    <span data-i18n="timer.button.start">Start</span>
   </button>
 
-  <div class="t-done-banner" id="t-done">⏰ Time's up!</div>
+  <div class="t-done-banner" id="t-done" data-i18n="timer.banner.done">⏰ Time's up!</div>
 </div>

@@ -4,9 +4,25 @@ window.PageModules = window.PageModules || {};
 window.PageModules['blocked-sites'] = {
     blockedSites: [],
 
+    t(key) {
+        if (window.I18n?.t) {
+            return window.I18n.t(key);
+        }
+
+        return key;
+    },
+
     // Kutsutaan kun sivu avataan
     onEnter() {
         this.init();
+    },
+
+    onLocaleChanged() {
+        if (window.I18n?.apply) {
+            window.I18n.apply(document.getElementById('page-dynamic'));
+        }
+
+        this.renderBlockedSites();
     },
 
     // Kutsutaan kun sivulta poistutaan
@@ -23,6 +39,10 @@ window.PageModules['blocked-sites'] = {
 
         if (!this.input || !this.addButton || !this.addCurrentSiteButton || !this.list || !this.message) {
             return;
+        }
+
+        if (window.I18n?.apply) {
+            window.I18n.apply(document.getElementById('page-dynamic'));
         }
 
         this.addButton.addEventListener('click', () => {
@@ -48,19 +68,19 @@ window.PageModules['blocked-sites'] = {
 
         //googlen front pagea ei voi lisätä estolistalle
         if (this.isNonBlockableGoogleInput(rawValue)) {
-            this.setMessage('Google front page cannot be added to the block list.', true);
+            this.setMessage(this.t('blockedSites.message.googleFrontPageNotAllowed'), true);
             return;
         }
 
         const normalizedHost = this.normalizeSiteInput(rawValue);
 
-        this.addNormalizedHost(normalizedHost, 'Site added to block list.');
+        this.addNormalizedHost(normalizedHost, this.t('blockedSites.message.siteAdded'));
     },
 
     addCurrentTabSite() {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (chrome.runtime.lastError) {
-                this.setMessage('Failed to retrieve current page.', true);
+                this.setMessage(this.t('blockedSites.message.fetchCurrentFailed'), true);
                 return;
             }
 
@@ -69,35 +89,35 @@ window.PageModules['blocked-sites'] = {
 
             if (this.isNonBlockableUrl(tabUrl)) {
                 //chrome front pagea ei voi lisätä estolistalle
-                this.setMessage('Chrome\'s start page cannot be added to the block list.', true);
+                this.setMessage(this.t('blockedSites.message.chromeStartNotAllowed'), true);
                 return;
             }
 
             if (this.isNonBlockableGoogleInput(tabUrl)) {
-                this.setMessage('Google front page cannot be added to the block list.', true);
+                this.setMessage(this.t('blockedSites.message.googleFrontPageNotAllowed'), true);
                 return;
             }
 
             const normalizedHost = this.normalizeSiteInput(tabUrl);
 
             if (!normalizedHost) {
-                this.setMessage('The current page cannot be added to the block list.', true);
+                this.setMessage(this.t('blockedSites.message.currentPageNotAllowed'), true);
                 return;
             }
 
-            this.addNormalizedHost(normalizedHost, 'Site added to block list.');
+            this.addNormalizedHost(normalizedHost, this.t('blockedSites.message.siteAdded'));
         });
     },
 
     addNormalizedHost(normalizedHost, successMessage) {
 
         if (!normalizedHost) {
-            this.setMessage('Please enter a valid URL or domain, e.g., youtube.com', true);
+            this.setMessage(this.t('blockedSites.message.invalidInput'), true);
             return;
         }
         //ei voi lisätä samaa sivua uudestaan estolistalle
         if (this.blockedSites.includes(normalizedHost)) {
-            this.setMessage('Site is already on the block list.', true);
+            this.setMessage(this.t('blockedSites.message.duplicateSite'), true);
             return;
         }
 
@@ -114,7 +134,7 @@ window.PageModules['blocked-sites'] = {
     removeSite(hostToRemove) {
         this.blockedSites = this.blockedSites.filter((host) => host !== hostToRemove);
         this.persistBlockedSites(() => {
-            this.setMessage('Site removed from block list.', false);
+            this.setMessage(this.t('blockedSites.message.siteRemoved'), false);
             this.renderBlockedSites();
         });
     },
@@ -135,7 +155,7 @@ window.PageModules['blocked-sites'] = {
     persistBlockedSites(callback) {
         chrome.storage.local.set({ blockedSites: this.blockedSites }, () => {
             if (chrome.runtime.lastError) {
-                this.setMessage('Failed to save changes. Please try again.', true);
+                this.setMessage(this.t('blockedSites.message.saveFailed'), true);
                 return;
             }
 
@@ -155,7 +175,7 @@ window.PageModules['blocked-sites'] = {
         if (this.blockedSites.length === 0) {
             const emptyItem = document.createElement('li');
             emptyItem.className = 'blocked-sites-empty';
-            emptyItem.textContent = 'No blocked sites yet.';
+            emptyItem.textContent = this.t('blockedSites.list.empty');
             this.list.appendChild(emptyItem);
             return;
         }
@@ -170,7 +190,7 @@ window.PageModules['blocked-sites'] = {
 
             const removeBtn = document.createElement('button');
             removeBtn.className = 'blocked-sites-remove-btn';
-            removeBtn.textContent = 'Remove';
+            removeBtn.textContent = this.t('blockedSites.list.removeButton');
             removeBtn.addEventListener('click', () => {
                 this.removeSite(site);
             });

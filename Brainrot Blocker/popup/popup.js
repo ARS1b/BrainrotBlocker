@@ -9,12 +9,12 @@ const menuItems = document.querySelectorAll('.menu-item'); // menu-napit jotka n
 const dynamicPage = document.getElementById('page-dynamic'); // dynaaminen container alasivuille
 
 // ===== Page titles mapping =====
-const pageTitles = {
-    'main': '🧠 Brainrot Blocker',
-    'blocked-sites': '🚫 Blocked Sites',
-    'timer': '⏱️ Study Timer',
-    'stats': '📊 Statistics',
-    'settings': '⚙️ Settings'
+const pageTitleKeys = {
+    'main': 'popup.header.main',
+    'blocked-sites': 'popup.header.blockedSites',
+    'timer': 'popup.header.timer',
+    'stats': 'popup.header.stats',
+    'settings': 'popup.header.settings'
 };
 
 // ===== State =====
@@ -26,6 +26,26 @@ const FOCUS_SESSION_STARTED_AT_KEY = 'focusSessionStartedAt';
 const APP_THEME_KEY = 'appTheme';
 const DEFAULT_THEME = 'dark';
 let currentTheme = DEFAULT_THEME;
+
+function t(key, substitutions) {
+    if (!window.I18n?.t) {
+        return key;
+    }
+
+    return window.I18n.t(key, substitutions);
+}
+
+function updateHeaderTitle(pageId = currentPage) {
+    const key = pageTitleKeys[pageId] || pageTitleKeys.main;
+    headerTitle.textContent = t(key);
+}
+
+function applyStaticTranslations() {
+    if (window.I18n?.apply) {
+        window.I18n.apply(document.getElementById('page-main'));
+        window.I18n.apply(document.querySelector('.footer'));
+    }
+}
 
 function normalizeTheme(theme) {
     return theme === 'light' ? 'light' : 'dark';
@@ -120,15 +140,21 @@ function startFocusSessionTimerLoop() {
 }
 
 // ===== Initialize =====
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     loadThemeFromStorage();
+
+    if (window.I18n?.init) {
+        await window.I18n.init();
+    }
+
+    applyStaticTranslations();
+    updateHeaderTitle();
+    updateFocusUI();
 
     // Load focus mode state from storage
     chrome.storage.local.get(['focusMode'], (result) => {
-        if (result.focusMode) {
-            focusMode = true;
-            updateFocusUI();
-        }
+        focusMode = Boolean(result.focusMode);
+        updateFocusUI();
 
         startFocusSessionTimerLoop();
     });
@@ -141,6 +167,21 @@ document.addEventListener('DOMContentLoaded', () => {
             navigateTo(data.pendingPage); // käyttää olemassa olevaa navigateTo-funktiota
         }
     });
+});
+
+window.addEventListener('app-locale-changed', () => {
+    applyStaticTranslations();
+    updateHeaderTitle();
+    updateFocusUI();
+
+    if (currentPage !== 'main' && window.I18n?.apply) {
+        window.I18n.apply(dynamicPage);
+    }
+
+    const activeModule = window.PageModules?.[currentPage];
+    if (activeModule?.onLocaleChanged) {
+        activeModule.onLocaleChanged();
+    }
 });
 
 // ===== Navigation =====
@@ -163,7 +204,7 @@ async function navigateTo(pageId) {
     }
 
     // Update header
-    headerTitle.textContent = pageTitles[pageId] || '🧠 Brainrot Blocker';
+    updateHeaderTitle(pageId);
 
     // Show/hide back button
     if (pageId === 'main') {
@@ -195,6 +236,9 @@ async function loadPageHTML(pageId) {
     // Käytä välimuistia jos sivu on jo ladattu
     if (loadedPages[pageId]) {
         dynamicPage.innerHTML = loadedPages[pageId];
+        if (window.I18n?.apply) {
+            window.I18n.apply(dynamicPage);
+        }
         return;
     }
 
@@ -204,9 +248,12 @@ async function loadPageHTML(pageId) {
         const html = await response.text();
         loadedPages[pageId] = html; // tallenna välimuistiin
         dynamicPage.innerHTML = html;
+        if (window.I18n?.apply) {
+            window.I18n.apply(dynamicPage);
+        }
     } catch (error) {
         console.error('Sivun lataus epäonnistui:', error);
-        dynamicPage.innerHTML = '<div class="page-content"><p class="placeholder-text">⚠️ Sivun lataus epäonnistui</p></div>';
+        dynamicPage.innerHTML = `<div class="page-content"><p class="placeholder-text">${t('popup.errors.pageLoadFailed')}</p></div>`;
     }
 
     // Lataa sivun JS — ja ODOTA sen valmistumista ennen paluuta.
@@ -248,13 +295,13 @@ focusToggleBtn.addEventListener('click', () => {
 function updateFocusUI() {
     if (focusMode) {
         statusDot.classList.add('active');
-        statusText.textContent = 'Focus Mode: ON';
-        focusToggleBtn.textContent = 'Stop Focusing';
+        statusText.textContent = t('popup.status.on');
+        focusToggleBtn.textContent = t('popup.focus.stop');
         focusToggleBtn.classList.add('active');
     } else {
         statusDot.classList.remove('active');
-        statusText.textContent = 'Focus Mode: OFF';
-        focusToggleBtn.textContent = 'Start Focusing';
+        statusText.textContent = t('popup.status.off');
+        focusToggleBtn.textContent = t('popup.focus.start');
         focusToggleBtn.classList.remove('active');
     }
 }

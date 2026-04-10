@@ -1,7 +1,94 @@
 // ===== Content Script =====
 // Tarkistaa onko nykyinen sivu estolistalla ja näyttää estonäkymän tarvittaessa.
 
-(function () {
+const APP_LOCALE_KEY = 'appLocale';
+const SUPPORTED_LOCALES = ['en', 'fi'];
+const DEFAULT_LOCALE_PREFERENCE = 'browser';
+
+let contentLocale = 'en';
+let contentMessages = {};
+const CONTENT_FALLBACK_MESSAGES = {
+	en: {
+		'content.blocked.title': 'Site Blocked'
+	},
+	fi: {
+		'content.blocked.title': 'Sivusto estetty'
+	}
+};
+
+function normalizeLocalePreference(value) {
+	if (value === 'en' || value === 'fi' || value === 'browser') {
+		return value;
+	}
+
+	return DEFAULT_LOCALE_PREFERENCE;
+}
+
+function resolveBrowserLocale() {
+	const uiLanguage = (chrome.i18n?.getUILanguage?.() || navigator.language || 'en').toLowerCase();
+	return uiLanguage.startsWith('fi') ? 'fi' : 'en';
+}
+
+function resolveEffectiveLocale(preference) {
+	if (preference === 'browser') {
+		return resolveBrowserLocale();
+	}
+
+	return SUPPORTED_LOCALES.includes(preference) ? preference : 'en';
+}
+
+async function fetchLocaleMessages(locale) {
+	const localeFileUrl = chrome.runtime.getURL(`popup/locales/${locale}.json`);
+	const response = await fetch(localeFileUrl);
+
+	if (!response.ok) {
+		throw new Error(`Failed to load locale file: ${locale}`);
+	}
+
+	return response.json();
+}
+
+async function loadContentMessages() {
+	const result = await new Promise((resolve) => {
+		chrome.storage.local.get([APP_LOCALE_KEY], (storageResult) => {
+			resolve(storageResult || {});
+		});
+	});
+
+	const preference = normalizeLocalePreference(result[APP_LOCALE_KEY]);
+	contentLocale = resolveEffectiveLocale(preference);
+
+	try {
+		contentMessages = await fetchLocaleMessages(contentLocale);
+	} catch (_error) {
+		try {
+			contentMessages = await fetchLocaleMessages('en');
+			contentLocale = 'en';
+		} catch (_fallbackError) {
+			contentMessages = {};
+			contentLocale = 'en';
+		}
+	}
+}
+
+function tContent(key) {
+	const value = contentMessages[key];
+	if (typeof value === 'string') {
+		return value;
+	}
+
+	const fallbackByLocale = CONTENT_FALLBACK_MESSAGES[contentLocale] || CONTENT_FALLBACK_MESSAGES.en;
+	const fallbackValue = fallbackByLocale[key] || CONTENT_FALLBACK_MESSAGES.en[key];
+	if (typeof fallbackValue === 'string') {
+		return fallbackValue;
+	}
+
+	return `[${key}]`;
+}
+
+(async function () {
+	await loadContentMessages();
+
 	const currentHost = normalizeHost(window.location.hostname);
 	let blockedViewRendered = false;
 
@@ -21,6 +108,13 @@
 
 	chrome.storage.onChanged.addListener((changes, areaName) => {
 		if (areaName !== 'local') {
+			return;
+		}
+
+		if (changes[APP_LOCALE_KEY] && blockedViewRendered) {
+			loadContentMessages().then(() => {
+				renderBlockedView(currentHost);
+			});
 			return;
 		}
 
@@ -99,11 +193,11 @@ function hostMatches(currentHost, blockedEntry) {
 function renderBlockedView(host) {
 	const blockedHtml = `
 <!doctype html>
-<html lang="en">
+<html lang="${escapeHtml(contentLocale)}">
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Site Blocked</title>
+	<title>${escapeHtml(tContent('content.blocked.title'))}</title>
 	<style>
 		* { box-sizing: border-box; }
 		body {
@@ -166,7 +260,7 @@ function renderBlockedView(host) {
 </head>
 <body>
 	<main class="blocked-card" role="dialog" aria-modal="true" aria-labelledby="blockedTitle">
-		<h1 class="blocked-title" id="blockedTitle">Site Blocked</h1>
+			<h1 class="blocked-title" id="blockedTitle">${escapeHtml(tContent('content.blocked.title'))}</h1>
 		<br />
 		<p class="blocked-host">${escapeHtml(host)}</p>
 		<br />
