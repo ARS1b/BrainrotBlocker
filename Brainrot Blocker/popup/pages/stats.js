@@ -11,9 +11,25 @@ window.PageModules.stats = {
     resetHandler: null,
     autoRefreshInterval: null,
 
+    t(key) {
+        if (window.I18n?.t) {
+            return window.I18n.t(key);
+        }
+
+        return key;
+    },
+
     // Kutsutaan kun sivu avataan
     onEnter() {
         this.init();
+    },
+
+    onLocaleChanged() {
+        if (window.I18n?.apply) {
+            window.I18n.apply(document.getElementById('page-dynamic'));
+        }
+
+        this.loadStats();
     },
 
     // Kutsutaan kun sivulta poistutaan
@@ -48,6 +64,10 @@ window.PageModules.stats = {
 
         if (!this.sessionNode || !this.overallNode || !this.siteListNode || !this.emptyStateNode || !this.refreshButton || !this.resetButton) {
             return;
+        }
+
+        if (window.I18n?.apply) {
+            window.I18n.apply(document.getElementById('page-dynamic'));
         }
 
         this.refreshHandler = () => {
@@ -92,7 +112,7 @@ window.PageModules.stats = {
     },
 
     resetOverallStats() {
-        const accepted = window.confirm('Reset overall stats and site usage totals?');
+        const accepted = window.confirm(this.t('stats.confirm.resetOverall'));
         if (!accepted) {
             return;
         }
@@ -153,6 +173,7 @@ window.PageModules.stats = {
         this.siteListNode.innerHTML = '';
 
         if (entries.length === 0) {
+            this.emptyStateNode.textContent = this.t('stats.empty.noFocusYet');
             this.emptyStateNode.style.display = 'block';
             return;
         }
@@ -181,7 +202,7 @@ window.PageModules.stats = {
         this.sessionNode.textContent = '00:00:00';
         this.overallNode.textContent = '00:00:00';
         this.siteListNode.innerHTML = '';
-        this.emptyStateNode.textContent = 'Unable to load stats right now.';
+        this.emptyStateNode.textContent = this.t('stats.empty.loadFailed');
         this.emptyStateNode.style.display = 'block';
     },
 
